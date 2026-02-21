@@ -15,36 +15,49 @@
     .app { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
 
     .logo-box {
-      margin-bottom: 40px;
-      min-height: 100px;
+      margin-bottom: 60px; /* More breathing room */
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    .client-logo {
-      max-width: 380px; height: auto;
-      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+    .ai-label {
+      font-size: 18px; /* Bigger status text */
+      font-weight: 800;
+      letter-spacing: 5px;
+      color: #9ca3af; 
+      margin-bottom: 12px;
+      text-transform: uppercase;
     }
 
-    /* Professional backup text if the image fails */
-    .logo-fallback {
-      font-size: 24px; font-weight: 800; letter-spacing: 1px;
-      color: #facc15; text-shadow: 2px 2px 4px #000;
+    .ai-status {
+      font-size: 36px; /* Significantly bigger font for Joe */
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: 1px;
+      color: #facc15; 
+      text-shadow: 0 0 25px rgba(250, 204, 21, 0.5);
+      text-transform: uppercase;
+      max-width: 90%;
     }
 
     #pttBtn { 
-      width: 220px; height: 220px; border-radius: 50%; 
-      border: 8px solid #ffffff; cursor: pointer;
+      width: 240px; height: 240px; /* Slightly larger orb to match font */
+      border-radius: 50%; 
+      border: 10px solid #ffffff; 
+      cursor: pointer;
       background: radial-gradient(circle at 30% 30%, #facc15, #ca8a04);
-      box-shadow: 0 0 50px rgba(250, 204, 21, 0.4); 
+      box-shadow: 0 0 60px rgba(250, 204, 21, 0.4); 
       position: relative; outline: none; transition: transform 0.1s ease;
     }
 
-    #pttBtn.listening { box-shadow: 0 0 80px rgba(250, 204, 21, 0.8); border-color: #fef08a; }
+    #pttBtn.listening { 
+      box-shadow: 0 0 100px rgba(250, 204, 21, 0.8); 
+      border-color: #fef08a; 
+    }
 
     #pttBtn.speaking::before {
-      content: ""; position: absolute; inset: -12px; border-radius: 50%;
+      content: ""; position: absolute; inset: -15px; border-radius: 50%;
       background: conic-gradient(from 0deg, #fef08a, #facc15, #854d0e, #fef08a);
       animation: swirl 0.8s linear infinite;
       -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 65%, rgba(0,0,0,1) 66%);
@@ -58,11 +71,8 @@
 <body>
   <div class="app">
     <div class="logo-box">
-      <img src="logo a1 p_1724964918667.webp" 
-           alt="A1 Professional Asphalt & Sealing" 
-           class="client-logo"
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-      <div class="logo-fallback" style="display:none;">A1 PROFESSIONAL ASPHALT & SEALING</div>
+      <div class="ai-label">SYSTEM ONLINE</div>
+      <div class="ai-status">TALK TO OUR<br>AI TEAM MEMBER</div>
     </div>
 
     <button id="pttBtn" aria-pressed="false"></button>

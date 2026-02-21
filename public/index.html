@@ -2,57 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>VoxTalk</title>
+  <title>VoxTalk | A1 Professional Asphalt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="data:,">
-  <!-- ... (styles unchanged) ... -->
   <style>
     body {
-      margin:0; font-family:system-ui,sans-serif;
-      display:grid; place-items:center; min-height:100vh;
-      background: radial-gradient(circle at 50% 20%, #dbeafe, #93c5fd 40%, #1e3a8a 90%);
+      margin: 0; 
+      font-family: system-ui, sans-serif;
+      display: grid; 
+      place-items: center; 
+      min-height: 100vh;
+      /* Asphalt road effect: dark edges to concrete gray center */
+      background: radial-gradient(circle at 50% 50%, #4b5563 0%, #1f2937 40%, #000000 100%);
+      color: white;
     }
-    .app { text-align:center; max-width:600px; }
-    .demo-label { font-size:12px; color:#111; margin-bottom:4px; }
-    h1 { margin:6px 0; font-size:22px; }
-    #pttBtn { width:120px; height:120px; border-radius:50%; border:none; cursor:pointer;
-      background: radial-gradient(circle at 30% 30%, #3b82f6, #1e40af);
-      box-shadow:0 6px 18px rgba(37,99,235,.3); transition: transform 0.15s ease, box-shadow 0.3s ease;
+    .app { text-align: center; max-width: 600px; padding: 20px; }
+    
+    .client-logo {
+      max-width: 280px;
+      height: auto;
+      margin-bottom: 30px;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+    }
+
+    #pttBtn { 
+      width: 140px; height: 140px; 
+      border-radius: 50%; 
+      border: 4px solid #ffffff; /* The White Halo */
+      cursor: pointer;
+      /* Traffic Yellow Gradient */
+      background: radial-gradient(circle at 30% 30%, #facc15, #ca8a04);
+      box-shadow: 0 0 30px rgba(250, 204, 21, 0.4); 
+      transition: transform 0.15s ease, box-shadow 0.3s ease;
       position: relative;
+      outline: none;
     }
-    #pttBtn:hover { transform: scale(1.02); }
+
+    #pttBtn:hover { transform: scale(1.05); }
     #pttBtn:active { transform: scale(0.95); }
+
+    /* Yellow Pulse when listening */
     #pttBtn.listening { animation: listenPulse 1.6s ease-in-out infinite; }
-    @keyframes listenPulse { 0% { box-shadow:0 0 0 0 rgba(59,130,246,.7); }
-      50% { box-shadow:0 0 0 20px rgba(59,130,246,0); }
-      100% { box-shadow:0 0 0 0 rgba(59,130,246,0); }
+    @keyframes listenPulse { 
+      0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+      50% { box-shadow: 0 0 0 25px rgba(250, 204, 21, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
     }
+
+    /* Yellow/Orange swirl when AI speaks */
     #pttBtn.speaking::before {
-      content:""; position:absolute; inset:0; border-radius:50%;
-      background: conic-gradient(from 0deg, #60a5fa, #2563eb, #1e40af, #60a5fa);
+      content: ""; position: absolute; inset: -4px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #fef08a, #facc15, #854d0e, #fef08a);
       animation: swirl 2s linear infinite;
       -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 65%, rgba(0,0,0,1) 66%);
               mask: radial-gradient(circle, rgba(0,0,0,0) 65%, rgba(0,0,0,1) 66%);
     }
     @keyframes swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
     #answer {
-      margin-top:20px; padding:12px; border:1px solid #ccc;
-      border-radius:8px; background:white;
-      min-height:80px; text-align:left; font-size:14px;
+      margin-top: 30px; padding: 20px; 
+      border: 2px solid #facc15; 
+      border-radius: 12px; 
+      background: #ffffff; 
+      color: #111;
+      min-height: 100px; text-align: left; font-size: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      overflow-y: auto;
+      max-height: 300px;
     }
-    .line { margin:6px 0; }
-    .me { color:#2563eb; font-weight:600; }
-    .ai { color:#065f46; font-weight:600; }
-    .text { color:#111; }
-    .muted { color:#777; font-style:italic; }
+    .line { margin: 8px 0; line-height: 1.4; }
+    .me { color: #ca8a04; font-weight: 700; }
+    .ai { color: #1f2937; font-weight: 700; }
+    .muted { color: #666; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="app">
-    <p class="demo-label">Demo</p>
-    <h1>Talk to VoxTalk</h1>
-    <button id="pttBtn" aria-pressed="false"></button>
-    <div id="answer"><div class="muted">Conversation will appear here.</div></div>
+    <img src="logo a1 p_1724964918667.webp" alt="A1 Professional Asphalt & Sealing" class="client-logo">
+    
+    <div>
+      <button id="pttBtn" aria-pressed="false"></button>
+    </div>
+
+    <div id="answer">
+      <div class="muted">Click the yellow button to speak with our asphalt team.</div>
+    </div>
     <audio id="remote" autoplay playsinline></audio>
   </div>
 
@@ -70,6 +104,7 @@
       answerEl.appendChild(div);
       answerEl.scrollTop = answerEl.scrollHeight;
     }
+
     function setListening(on) { pttBtn.classList.toggle('listening', on); }
     function setSpeaking(on) { pttBtn.classList.toggle('speaking', on); }
 
@@ -140,8 +175,8 @@
     }
     initRealtime();
 
-    // Add your custom greeting on load!
-    appendLine("ai", "Hello, this is VoxTalk. I was created by your dad, Marty Simpson.<br><br>Hello Mia and Rachel, nice to meet you!<br><br>You can ask me anything you would like.");
+    // Custom A1 Branding Greeting
+    appendLine("ai", "Hello! This is VoxTalk for A1 Professional Asphalt & Sealing. How can we help you with your paving or sealcoating project today?");
   </script>
 </body>
 </html>

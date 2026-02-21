@@ -2,42 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>A1 Asphalt AI Team Member</title>
+  <title>VoxTalk | A1 Professional Asphalt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="data:,">
   <style>
     body {
-      margin: 0; font-family: system-ui, sans-serif;
-      display: grid; place-items: center; min-height: 100vh;
-      /* Background: Black edges fading to concrete gray in the middle */
+      margin: 0; 
+      font-family: system-ui, sans-serif;
+      display: grid; 
+      place-items: center; 
+      min-height: 100vh;
+      /* Background: Black edges fading to concrete gray center */
       background: radial-gradient(circle at 50% 50%, #4b5563 0%, #1f2937 40%, #000000 100%);
       color: white;
-      overflow: hidden;
     }
-    .app { text-align: center; max-width: 500px; width: 90%; }
+    .app { text-align: center; max-width: 500px; width: 90%; padding: 20px; }
     
     .client-logo {
       max-width: 300px;
       height: auto;
       margin-bottom: 25px;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
     }
 
     #pttBtn { 
       width: 130px; height: 130px; 
       border-radius: 50%; 
-      border: 5px solid #ffffff; /* The White Halo you requested */
+      border: 5px solid #ffffff; /* The White Halo */
       cursor: pointer;
-      /* Traffic Yellow / Road Stripe Gradient */
+      /* Traffic Yellow Gradient */
       background: radial-gradient(circle at 30% 30%, #facc15, #ca8a04);
-      box-shadow: 0 0 25px rgba(250, 204, 21, 0.5); 
-      transition: transform 0.1s ease;
+      box-shadow: 0 0 30px rgba(250, 204, 21, 0.4); 
+      transition: transform 0.1s ease, box-shadow 0.3s ease;
       position: relative;
       outline: none;
     }
 
-    #pttBtn:hover { transform: scale(1.03); }
-    #pttBtn:active { transform: scale(0.96); }
+    #pttBtn:hover { transform: scale(1.05); }
+    #pttBtn:active { transform: scale(0.95); }
 
     /* Yellow Pulse when listening */
     #pttBtn.listening { animation: listenPulse 1.6s ease-in-out infinite; }
@@ -58,32 +60,32 @@
     @keyframes swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     #answer {
-      margin-top: 25px; padding: 15px; 
+      margin-top: 30px; padding: 20px; 
       border: 2px solid #facc15; 
       border-radius: 12px; 
       background: #ffffff; 
       color: #111;
       min-height: 120px; text-align: left; font-size: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       overflow-y: auto;
-      max-height: 250px;
+      max-height: 300px;
     }
-    .line { margin: 8px 0; }
+    .line { margin: 8px 0; line-height: 1.4; }
     .me { color: #854d0e; font-weight: 700; }
-    .ai { color: #111; font-weight: 700; }
-    .muted { color: #777; font-style: italic; font-size: 13px; }
+    .ai { color: #1f2937; font-weight: 700; }
+    .muted { color: #666; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="app">
-    <img src="logo a1 p_1724964918667.webp" alt="A1 Professional Asphalt Logo" class="client-logo">
+    <img src="logo a1 p_1724964918667.webp" alt="A1 Professional Asphalt & Sealing" class="client-logo">
     
     <div>
       <button id="pttBtn" aria-pressed="false"></button>
     </div>
 
     <div id="answer">
-      <div class="muted">Press the yellow button to talk with our AI team member...</div>
+      <div class="muted">Press the yellow button to talk with our asphalt expert...</div>
     </div>
     <audio id="remote" autoplay playsinline></audio>
   </div>
@@ -173,7 +175,6 @@
     }
     initRealtime();
 
-    // Initial Greeting
     appendLine("ai", "Hi! I'm the A1 Asphalt AI team member. How can I help you with your paving or sealing project today?");
   </script>
 </body>

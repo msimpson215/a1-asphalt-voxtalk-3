@@ -7,23 +7,28 @@
   <style>
     body {
       margin: 0; font-family: system-ui, sans-serif;
-      display: grid; place-items: center; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh;
       background: radial-gradient(circle at 50% 50%, #374151 0%, #111827 50%, #000000 100%);
       color: white; overflow: hidden;
     }
-    .app { text-align: center; width: 100%; max-width: 600px; }
+    .app { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
+
     .client-logo {
       max-width: 380px; height: auto; margin-bottom: 40px;
       filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
     }
+
     #pttBtn { 
-      width: 200px; height: 200px; border-radius: 50%; 
+      width: 220px; height: 220px; border-radius: 50%; 
       border: 8px solid #ffffff; cursor: pointer;
       background: radial-gradient(circle at 30% 30%, #facc15, #ca8a04);
       box-shadow: 0 0 50px rgba(250, 204, 21, 0.4); 
       position: relative; outline: none; transition: transform 0.1s ease;
     }
+
     #pttBtn.listening { box-shadow: 0 0 80px rgba(250, 204, 21, 0.8); border-color: #fef08a; }
+
     #pttBtn.speaking::before {
       content: ""; position: absolute; inset: -12px; border-radius: 50%;
       background: conic-gradient(from 0deg, #fef08a, #facc15, #854d0e, #fef08a);
@@ -32,13 +37,14 @@
               mask: radial-gradient(circle, rgba(0,0,0,0) 65%, rgba(0,0,0,1) 66%);
     }
     @keyframes swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    /* THIS HIDES THE WHITE BOX */
+    
+    /* Force hide the white box and any stray text */
     #answer { display: none !important; }
   </style>
 </head>
 <body>
   <div class="app">
-    <img src="logo a1 p_1724964918667.webp?v=2" alt="A1 Professional Asphalt & Sealing" class="client-logo">
+    <img src="/logo a1 p_1724964918667.webp" alt="A1 Professional Asphalt & Sealing" class="client-logo">
     <button id="pttBtn" aria-pressed="false"></button>
     <div id="answer"></div>
     <audio id="remote" autoplay playsinline></audio>

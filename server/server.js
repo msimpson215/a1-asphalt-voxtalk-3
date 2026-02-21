@@ -15,19 +15,17 @@ app.post("/session", async (req, res) => {
         model: "gpt-4o-realtime-preview",
         voice: "alloy",
         instructions:
-          "You are an AI voice assistant. When the user starts a session, greet them by saying: 'Hi, this is VoxTalk. How can I help you today, Mia?' ALWAYS respond in English. Never default to Spanish. If the user speaks another language, translate it and reply only in English."
+          "You are an AI assistant for A1 Professional Asphalt & Sealing. Greet users warmly and mention you are their paving expert. You specialize in asphalt repair, sealcoating, and driveway maintenance. Keep responses professional, helpful, and concise. ALWAYS respond in English. If they ask about pricing, mention we provide free estimates."
       })
     });
 
     const data = await r.json();
 
-    // Add a 10-minute timeout
     const session = {
       client_secret: data.client_secret,
       model: "gpt-4o-realtime-preview",
       voice: "alloy",
-      deepgramKey: process.env.DEEPGRAM_API_KEY, // keep this for now
-      expires_at: Date.now() + 10 * 60 * 1000 // 10 minutes
+      expires_at: Date.now() + 10 * 60 * 1000 
     };
 
     res.json(session);

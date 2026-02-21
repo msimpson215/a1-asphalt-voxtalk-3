@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      margin: 0; font-family: system-ui, sans-serif;
+      margin: 0; font-family: system-ui, -apple-system, sans-serif;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       min-height: 100vh;
       background: radial-gradient(circle at 50% 50%, #374151 0%, #111827 50%, #000000 100%);
@@ -14,9 +14,23 @@
     }
     .app { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
 
+    .logo-box {
+      margin-bottom: 40px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     .client-logo {
-      max-width: 380px; height: auto; margin-bottom: 40px;
+      max-width: 380px; height: auto;
       filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+    }
+
+    /* Professional backup text if the image fails */
+    .logo-fallback {
+      font-size: 24px; font-weight: 800; letter-spacing: 1px;
+      color: #facc15; text-shadow: 2px 2px 4px #000;
     }
 
     #pttBtn { 
@@ -38,13 +52,19 @@
     }
     @keyframes swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     
-    /* Force hide the white box and any stray text */
     #answer { display: none !important; }
   </style>
 </head>
 <body>
   <div class="app">
-    <img src="/logo a1 p_1724964918667.webp" alt="A1 Professional Asphalt & Sealing" class="client-logo">
+    <div class="logo-box">
+      <img src="logo a1 p_1724964918667.webp" 
+           alt="A1 Professional Asphalt & Sealing" 
+           class="client-logo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div class="logo-fallback" style="display:none;">A1 PROFESSIONAL ASPHALT & SEALING</div>
+    </div>
+
     <button id="pttBtn" aria-pressed="false"></button>
     <div id="answer"></div>
     <audio id="remote" autoplay playsinline></audio>

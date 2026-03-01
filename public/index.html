@@ -13,7 +13,6 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            /* Deep, sharp asphalt background */
             background: #1a1a1a; 
             color: white;
             font-family: 'Segoe UI', sans-serif;
@@ -25,7 +24,7 @@
             font-size: 1.2rem;
             letter-spacing: 3px;
             font-weight: 400;
-            color: #ffcc00; /* Traffic Yellow */
+            color: #ffcc00; 
             text-transform: uppercase;
         }
 
@@ -36,36 +35,33 @@
             cursor: pointer;
         }
 
-        /* The Clean-Cut Sun - Sharp and Pro */
         .orb {
             position: absolute;
             width: 100%;
             height: 100%;
             border-radius: 50%;
             background: #ffcc00;
-            /* Natural glow effect without the dizzy halo */
             box-shadow: 0 0 40px rgba(255, 204, 0, 0.6);
             z-index: 2;
-            transition: transform 0.2s ease;
         }
 
-        /* Subtle breathing only when AI speaks */
+        /* Breathing only when speaking */
         body.speaking .orb {
-            animation: sun-breathe 2s infinite ease-in-out;
+            animation: sun-breathe 2.5s infinite ease-in-out;
         }
 
         @keyframes sun-breathe {
             0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); }
-            50% { transform: scale(1.08); box-shadow: 0 0 70px rgba(255, 204, 0, 0.9); }
+            50% { transform: scale(1.1); box-shadow: 0 0 70px rgba(255, 204, 0, 0.9); }
         }
 
         #branding-footer {
             position: absolute;
-            bottom: 35px; 
+            bottom: 30px; 
             width: 100%;
             font-size: 1rem;
             color: #ffcc00;
-            opacity: 0.8;
+            opacity: 0.7;
             text-align: center;
             letter-spacing: 2px;
         }
@@ -75,49 +71,49 @@
 
     <div id="status-text">TALK TO OUR AI TEAM MEMBER</div>
 
-    <div id="orb-container" onclick="startConnection()">
+    <div id="orb-container" onclick="initRealtime()">
         <div class="orb"></div>
     </div>
 
     <div id="branding-footer">A1 PROFESSIONAL ASPHALT & SEALING LLC</div>
 
     <script>
-        let pc; // PeerConnection
-        let dc; // DataChannel
+        let pc;
 
-        async function startConnection() {
+        function setMode(mode) {
+            document.body.className = mode; 
+            const statusLabel = document.getElementById('status-text');
+            if (mode === 'listening') statusLabel.textContent = "I'M LISTENING...";
+            else if (mode === 'speaking') statusLabel.textContent = "TEAM MEMBER SPEAKING";
+            else statusLabel.textContent = "TALK TO OUR AI TEAM MEMBER";
+        }
+
+        async function initRealtime() {
             try {
-                // 1. Trigger Microphone
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setMode('listening');
-                console.log("Microphone access granted. Connecting...");
 
-                // 2. Get the session token from your server
-                const response = await fetch("/session");
-                const data = await response.json();
+                const tokenResponse = await fetch("/session");
+                const data = await tokenResponse.json();
                 const EPHEMERAL_KEY = data.client_secret.value;
 
-                // 3. Setup WebRTC
                 pc = new RTCPeerConnection();
                 const audioEl = document.createElement("audio");
                 audioEl.autoplay = true;
                 pc.ontrack = e => audioEl.srcObject = e.streams[0];
                 pc.addTrack(stream.getTracks()[0]);
 
-                // 4. Data Channel for syncing the "Sun" movement
-                dc = pc.createDataChannel("oai-events");
+                const dc = pc.createDataChannel("oai-events");
                 dc.addEventListener("message", (e) => {
                     const event = JSON.parse(e.data);
-                    // Breathe when audio is coming in
                     if (event.type === "response.audio.delta") setMode('speaking');
                     if (event.type === "response.audio.done") setMode('listening');
                 });
 
-                // 5. Connect to OpenAI
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 
-                const sdpResponse = await fetch(`https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`, {
+                const sdpResponse = await fetch("https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", {
                     method: "POST",
                     body: offer.sdp,
                     headers: {
@@ -128,26 +124,12 @@
 
                 const answer = { type: "answer", sdp: await sdpResponse.text() };
                 await pc.setRemoteDescription(answer);
-
+                
             } catch (err) {
-                console.error("Connection failed:", err);
-                document.getElementById('status-text').textContent = "CHECK SERVER/API KEY";
+                console.error(err);
+                document.getElementById('status-text').textContent = "CONNECTION ERROR";
             }
         }
-
-        function setMode(mode) {
-            document.body.className = mode; 
-            const statusLabel = document.getElementById('status-text');
-            if (mode === 'listening') statusLabel.textContent = "I'M LISTENING...";
-            else if (mode === 'speaking') statusLabel.textContent = "TEAM MEMBER SPEAKING";
-            else statusLabel.textContent = "TALK TO OUR AI TEAM MEMBER";
-        }
-
-        window.onload = () => {
-            const now = new Date().getTime();
-            localStorage.setItem('voxTalk_lastSeen', now);
-            console.log("Ready for Joe.");
-        };
     </script>
 </body>
 </html>

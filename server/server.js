@@ -1,15 +1,10 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
-
 const app = express();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Serve the static files from the public folder
 app.use(express.static('public'));
 
 app.get('/session', async (req, res) => {
@@ -23,20 +18,16 @@ app.get('/session', async (req, res) => {
             body: JSON.stringify({
                 model: "gpt-4o-realtime-preview-2024-12-17",
                 voice: "alloy",
-                // STRICT GREETING: No extra words. Just Hello, Joe.
-                instructions: "You are the A1 Brain. You are talking to Joe. Start every session by saying exactly: 'Hello, Joe.' and nothing else. Be professional and stay focused on asphalt paving, sealing, and striping.",
+                // EXACT GREETING: NO EXTRA WORDS
+                instructions: "You are the A1 Brain. You are talking to Joe. Start every session by saying exactly: 'Hello, Joe.' and nothing else.",
                 modalities: ["audio", "text"],
-                input_audio_transcription: { model: "whisper-1" }
             }),
         });
-
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error("Session Error:", error);
-        res.status(500).json({ error: "Could not create session" });
+        res.status(500).json({ error: "API Failure" });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`A1 Brain Server running on port ${PORT}`));
+app.listen(process.env.PORT || 3000);

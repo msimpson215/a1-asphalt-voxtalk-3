@@ -9,73 +9,63 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: space-around;
             height: 100vh;
-            padding: 8vh 0;
             /* Asphalt Depth: Lighter center fading to true black edges */
-            background: radial-gradient(circle, #252525 0%, #000000 100%);
+            background: radial-gradient(circle, #252525 0%, #000000 100%); 
             color: #ffcc00; /* Traffic Yellow */
-            font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
+            font-family: 'Impact', 'Arial Narrow Bold', sans-serif; /* FONT IS HERE */
             overflow: hidden;
-            box-sizing: border-box;
         }
 
         #status-text {
-            font-size: clamp(2rem, 8vw, 3.5rem); 
-            letter-spacing: 1px;
+            font-size: 2.2rem; /* SIZE IS HERE - Make smaller if needed */
             text-transform: uppercase;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            margin: 0;
+            letter-spacing: 2px;
         }
 
         #orb-container {
-            width: 240px;
-            height: 240px;
+            width: 220px;
+            height: 220px;
             cursor: pointer;
-            position: relative;
         }
 
         .orb {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: #ffcc00;
-            /* High Intensity Glow */
-            box-shadow: 0 0 70px rgba(255, 204, 0, 0.9);
+            background-color: #ffcc00;
+            box-shadow: 0 0 60px rgba(255, 204, 0, 0.8);
         }
 
         body.active .orb {
-            animation: pulse 1s infinite alternate ease-in-out;
+            animation: pulse 1.2s infinite alternate ease-in-out;
         }
 
         @keyframes pulse {
-            from { transform: scale(1); box-shadow: 0 0 70px rgba(255, 204, 0, 0.9); }
-            to { transform: scale(1.08); box-shadow: 0 0 100px rgba(255, 204, 0, 1); }
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
         }
 
         #footer-brand {
-            font-size: clamp(1rem, 4vw, 1.8rem);
-            letter-spacing: 1px;
+            font-size: 1.2rem; /* FOOTER SIZE IS HERE */
             text-transform: uppercase;
-            opacity: 0.9;
         }
     </style>
 </head>
-<body class="idle">
-
+<body>
     <div id="status-text">TALK TO OUR AI TEAM MEMBER</div>
-
     <div id="orb-container" onclick="startAssistant()">
         <div class="orb"></div>
     </div>
-
     <div id="footer-brand">A1 Professional Asphalt LLC</div>
 
     <script>
-        let connected = false;
+        let isStarted = false; // STOPS THE ECHO
+
         async function startAssistant() {
-            if (connected) return;
-            connected = true;
+            if (isStarted) return; 
+            isStarted = true;
 
             document.body.className = 'active';
             document.getElementById('status-text').textContent = "LISTENING...";
@@ -87,7 +77,7 @@
                 const pc = new RTCPeerConnection();
                 const audio = document.createElement("audio");
                 audio.autoplay = true;
-
+                
                 pc.ontrack = e => {
                     if (audio.srcObject !== e.streams[0]) {
                         audio.srcObject = e.streams[0];
@@ -109,9 +99,11 @@
                     }
                 });
 
-                await pc.setRemoteDescription({ type: "answer", sdp: await sdpResponse.text() });
+                const answer = { type: "answer", sdp: await sdpResponse.text() };
+                await pc.setRemoteDescription(answer);
+
             } catch (err) {
-                connected = false;
+                isStarted = false;
                 document.getElementById('status-text').textContent = "ERROR";
             }
         }

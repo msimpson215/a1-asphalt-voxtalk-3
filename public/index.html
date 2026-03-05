@@ -27,7 +27,7 @@
       user-select: none;
     }
 
-    /* Click-outside overlay */
+    /* click-outside overlay */
     #overlay{
       position: fixed;
       inset: 0;
@@ -36,9 +36,9 @@
       padding: 22px;
     }
 
-    /* small focused box */
+    /* focused box */
     #panel{
-      width: min(440px, calc(100vw - 44px));
+      width: min(460px, calc(100vw - 44px));
       border-radius: 18px;
       padding: 18px 18px 14px;
       background: var(--panel);
@@ -51,7 +51,6 @@
       gap: 12px;
     }
 
-    /* small headline, orb is focus */
     #headline {
       font-size: 0.98rem;
       letter-spacing: 1px;
@@ -62,7 +61,7 @@
       padding: 0 6px;
     }
 
-    /* make LISTENING small */
+    /* status is always small */
     #status-text{
       font-size: 0.90rem;
       letter-spacing: 1px;
@@ -74,15 +73,17 @@
       min-height: 1.2em;
     }
 
+    /* hint is tiny */
     #hint{
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--muted2);
       text-align: center;
       line-height: 1.2;
       margin-top: -2px;
+      min-height: 1.1em;
     }
 
-    /* orb (slightly smaller) */
+    /* orb slightly smaller */
     #orb-container {
       width: 190px;
       height: 190px;
@@ -119,19 +120,29 @@
       100% { transform: scale(1.15); box-shadow: 0 0 112px rgba(254,209,0,1); }
     }
 
-    #footer-brand {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      opacity: 0.55;
-      text-align: center;
-      margin-top: 2px;
-    }
-
-    /* optional: prevent rapid clicking while starting */
+    /* lock while starting */
     body.starting #orb-container {
       pointer-events: none;
       opacity: 0.92;
+    }
+
+    #footer {
+      text-align: center;
+      opacity: 0.60;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+
+    #footer .brand {
+      font-size: 0.82rem;
+    }
+
+    #footer .phone {
+      font-size: 0.78rem;
+      opacity: 0.85;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -146,10 +157,12 @@
       </div>
 
       <div id="status-text"></div>
+      <div id="hint">Click outside this box to return to the website</div>
 
-      <div id="hint">Click anywhere outside this box to go back to the website</div>
-
-      <div id="footer-brand">A1 Professional Asphalt &amp; Concrete</div>
+      <div id="footer">
+        <div class="brand">A1 Professional Asphalt &amp; Concrete</div>
+        <div class="phone">(800) 000-0000</div>
+      </div>
     </div>
   </div>
 
@@ -159,21 +172,31 @@
     let starting = false;
 
     const statusEl = document.getElementById('status-text');
+    const headlineEl = document.getElementById('headline');
+    const hintEl = document.getElementById('hint');
 
     function setIdle() {
       document.body.className = 'idle';
       statusEl.textContent = "";
+      headlineEl.style.display = "";
+      hintEl.textContent = "Click outside this box to return to the website";
       starting = false;
     }
 
     function setStarting() {
       document.body.className = 'starting';
       statusEl.textContent = "STARTING…";
+      // keep headline visible while it spins up
+      headlineEl.style.display = "";
+      hintEl.textContent = "Click outside this box to return to the website";
     }
 
     function setActive() {
       document.body.className = 'active';
       statusEl.textContent = "LISTENING…";
+      // once active, headline goes away; hint becomes tiny + actionable
+      headlineEl.style.display = "none";
+      hintEl.textContent = "Click orb to pause";
     }
 
     async function hardStop() {
@@ -196,31 +219,25 @@
       if (e.target.id !== "overlay") return;
       await hardStop();
 
-      // If embedded in a Webflow modal/iframe, notify parent to close
       try { window.parent.postMessage({ type: "voxtalk-close" }, "*"); } catch {}
-
-      // If standalone tab/window, try close/back
       try { window.close(); } catch {}
       try { history.back(); } catch {}
     });
 
     async function toggleAssistant() {
-      // Stop if running
+      // If running OR starting, this click is treated as "pause/stop"
       if (pc || starting) {
         await hardStop();
         return;
       }
 
-      // Start (lock to prevent double start)
       starting = true;
       setStarting();
 
       try {
-        // Get session token
         const r = await fetch('/session');
         const data = await r.json();
 
-        // Create peer connection
         pc = new RTCPeerConnection();
 
         const audio = document.createElement("audio");
@@ -232,11 +249,9 @@
           }
         };
 
-        // Mic
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         pc.addTrack(localStream.getTracks()[0]);
 
-        // Offer/answer
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
@@ -255,7 +270,6 @@
         const answer = { type: "answer", sdp: await sdpResponse.text() };
         await pc.setRemoteDescription(answer);
 
-        // Now active
         setActive();
 
       } catch (err) {
@@ -268,10 +282,12 @@
         document.body.className = 'idle';
         statusEl.textContent = "ERROR";
         starting = false;
+        // reset headline/hint on error
+        headlineEl.style.display = "";
+        hintEl.textContent = "Click outside this box to return to the website";
       }
     }
 
-    // initial state
     setIdle();
   </script>
 </body>

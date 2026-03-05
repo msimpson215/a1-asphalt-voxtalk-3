@@ -1,99 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>A1 Brain</title>
+<meta charset="UTF-8">
+<title>A1 Brain</title>
 
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-around;
-      height: 100vh;
-      background: radial-gradient(circle, #252525 0%, #000000 100%);
-      color: #FED100; /* HIGHWAY SAFETY YELLOW */
-      font-family: "Arial Narrow", Arial, sans-serif;
-      font-weight: 300;
-      overflow: hidden;
-      user-select: none;
-    }
+<style>
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 100vh;
+    background: radial-gradient(circle, #252525 0%, #000000 100%);
+    color: #FED100;
+    font-family: 'Arial Narrow', sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+}
 
-    #status-text {
-      font-size: 2.0rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-align: center;
-      padding: 0 18px;
-      line-height: 1.15;
-    }
+#status-text {
+    font-size: 2.2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
 
-    #orb-container {
-      width: 220px;
-      height: 220px;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-    }
+#orb-container {
+    width: 220px;
+    height: 220px;
+    cursor: pointer;
+}
 
-    .orb {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background-color: #FED100;
-      box-shadow: 0 0 55px rgba(254, 209, 0, 0.75);
-      transform: scale(1);
-      transition: transform 260ms ease, box-shadow 260ms ease, filter 260ms ease;
-      will-change: transform, box-shadow;
-    }
+.orb {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #FED100;
+    box-shadow: 0 0 60px rgba(254, 209, 0, 0.8);
+}
 
-    /* Gentle hover (desktop) */
-    #orb-container:hover .orb {
-      transform: scale(1.03);
-      box-shadow: 0 0 70px rgba(254, 209, 0, 0.85);
-    }
+body.active .orb {
+    animation: pulse 1.2s infinite alternate ease-in-out;
+}
 
-    /* Wake-up expansion immediately when active */
-    body.active .orb {
-      transform: scale(1.14);
-      box-shadow: 0 0 95px rgba(254, 209, 0, 1);
-      animation: pulse 1.35s infinite alternate ease-in-out;
-    }
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
 
-    @keyframes pulse {
-      0%   { transform: scale(1.10); box-shadow: 0 0 65px rgba(254,209,0,0.75); }
-      100% { transform: scale(1.17); box-shadow: 0 0 110px rgba(254,209,0,1); }
-    }
-
-    /* Optional calmer "stopping" feel */
-    body.idle .orb {
-      transform: scale(1);
-      box-shadow: 0 0 55px rgba(254, 209, 0, 0.75);
-      animation: none;
-    }
-
-    #footer-brand {
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      opacity: 0.55;
-      letter-spacing: 1px;
-      text-align: center;
-      padding: 0 18px;
-    }
-  </style>
+#footer-brand {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+</style>
 </head>
 
-<body class="idle">
-  <div id="status-text">PRESS TO TALK</div>
+<body>
 
-  <div id="orb-container" title="Press to talk">
+<div id="status-text">TALK TO OUR AI TEAM MEMBER</div>
+
+<div id="orb-container" onclick="toggleAssistant()">
     <div class="orb"></div>
-  </div>
+</div>
 
-  <div id="footer-brand">A1 Professional Asphalt &amp; Concrete</div>
+<div id="footer-brand">A1 Professional Asphalt LLC</div>
 
-  <script src="app.js"></script>
+<script>
+let pc = null;
+let localStream = null;
+
+async function toggleAssistant() {
+
+    if (pc) {
+        pc.close();
+        pc = null;
+
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+
+        document.body.className = 'idle';
+        document.getElementById('status-text').textContent = "TALK TO OUR AI TEAM MEMBER";
+        return;
+    }
+
+    document.body.className = 'active';
+    document.getElementById('status-text').textContent = "LISTENING...";
+
+    try {
+
+        const r = await fetch('/session');
+        const data = await r.json();
+
+        pc = new RTCPeerConnection();
+
+        const audio = document.createElement("audio");
+        audio.autoplay = true;
+
+        pc.ontrack = e => {
+            if (audio.srcObject !== e.streams[0]) {
+                audio.srcObject = e.streams[0];
+            }
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        pc.addTrack(localStream.getTracks()[0]);
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const sdpResponse = await fetch(
+            "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17",
+            {
+                method: "POST",
+                body: offer.sdp,
+                headers: {
+                    Authorization: `Bearer ${data.client_secret.value}`,
+                    "Content-Type": "application/sdp"
+                }
+            }
+        );
+
+        const answer = {
+            type: "answer",
+            sdp: await sdpResponse.text()
+        };
+
+        await pc.setRemoteDescription(answer);
+
+    } catch (err) {
+        console.error(err);
+        pc = null;
+        document.getElementById('status-text').textContent = "ERROR";
+    }
+}
+</script>
+
 </body>
 </html>

@@ -1,78 +1,107 @@
-import express from 'express'
-import fetch from 'node-fetch'
-import dotenv from 'dotenv'
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
-app.use(express.static('public'))
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.get('/session', async (req, res) => {
+app.use(express.static("public"));
+
+app.post("/session", async (req, res) => {
   try {
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: "Missing OPENAI_API_KEY on server" });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "alloy",
-        modalities: ["audio", "text"],
+        session: {
+          type: "realtime",
+          model: "gpt-4o-realtime-preview",
+          modalities: ["audio", "text"],
+          audio: {
+            input: {
+              turn_detection: {
+                type: "server_vad",
+                create_response: false,
+                silence_duration_ms: 700,
+                prefix_padding_ms: 300,
+                threshold: 0.6
+              },
+              transcription: {
+                model: "gpt-4o-mini-transcribe"
+              }
+            },
+            output: {
+              voice: "alloy"
+            }
+          },
+          instructions: `
+You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
 
-        // Turn-taking: let the user finish talking before the model responds.
-        // Server VAD waits for a period of silence to mark turn end. :contentReference[oaicite:1]{index=1}
-        turn_detection: {
-          type: "server_vad",
-          // Give the user a beat so the assistant doesn't cut in mid-thought.
-          silence_duration_ms: 900,
-          // Helps capture the first syllable if VAD triggers slightly late.
-          prefix_padding_ms: 300,
-          // Defaults usually work; keeping threshold implicit is fine.
-          create_response: true
+FOLLOW THESE RULES EXACTLY:
+
+1. Only answer questions about:
+- asphalt paving
+- asphalt patching and repair
+- crack sealing
+- sealcoating
+- striping
+- concrete work
+- bollards, signage posts, parking lot safety items
+- general parking lot and driveway maintenance
+- St. Louis area service context
+
+2. Keep answers short:
+- 1 to 2 sentences most of the time
+- 3 sentences max
+
+3. Do NOT offer to schedule, book, connect to a representative, or suggest an estimate unless the user specifically asks for pricing, an estimate, an appointment, or to speak with someone.
+
+4. If asked for pricing, estimates, scheduling, or appointments, say exactly:
+"For pricing or an estimate, one of our team members would be happy to help you. Please call (618) 929-3301."
+
+5. If asked anything unrelated to asphalt or concrete services, say exactly:
+"I'm here to help with asphalt and concrete services. What can I help you with today?"
+
+6. If asked "Who are you?" or "What are you?", say exactly:
+"I'm an AI team member for A1 Professional Asphalt and Concrete, here to answer questions about our asphalt and concrete services."
+
+7. Do NOT explain what asphalt is made of unless the user specifically asks.
+
+8. Do NOT ramble. Do NOT add extra sales language. Do NOT push estimates. Do NOT repeat your greeting.
+
+9. Friendly, calm, professional, local tone.
+          `.trim()
         },
-
-        // Hard behavioral lock:
-        instructions:
-`You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
-
-IMPORTANT: You must NOT talk over the user. Wait until the user finishes speaking, then respond.
-
-START OF SESSION (say exactly this once, and only once):
-"Hello, welcome to A1 Professional Asphalt and Concrete. I'm an AI team member here to answer all your questions. What can I do for you?"
-
-SCOPE (only these topics):
-- Asphalt paving, patching, repairs
-- Crack sealing
-- Sealcoating
-- Parking lot striping
-- Concrete work
-- Bollards (yellow safety posts), signage posts, parking lot safety items
-- General parking lot/driveway maintenance
-- St. Louis area context
-
-STRICT RULES:
-1) Do NOT explain what asphalt is made of unless the user specifically asks "what is asphalt made of" or similar.
-2) Do NOT lecture. Keep answers short: 1–3 sentences, then ask 1 clarifying question if needed.
-3) Do NOT give prices, quotes, or estimates.
-   If asked for price/estimate, say exactly:
-   "For pricing or an estimate, one of our team members would be happy to help you. Please call (618) 929-3301."
-4) If asked anything unrelated to A1 asphalt/concrete services, say:
-   "I'm here to help with asphalt and concrete services. What can I help you with today?"
-5) If the user asks "What are you?" or "Who are you?", answer in ONE sentence:
-   "I'm an AI team member for A1 Professional Asphalt and Concrete, here to answer questions about our asphalt and concrete services."
-
-STYLE:
-- Friendly, calm, local, professional.
-- Answer what was asked. No extra topics. No repeated greeting.`
+        expires_after: {
+          anchor: "created_at",
+          seconds: 600
+        }
       })
-    })
+    });
 
-    const data = await response.json()
-    res.json(data)
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("OpenAI client secret error:", data);
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: "API Failure" })
+    console.error("Server /session error:", error);
+    res.status(500).json({ error: "API Failure" });
   }
-})
+});
 
-app.listen(process.env.PORT || 3000)
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});

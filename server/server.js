@@ -16,7 +16,7 @@ app.get('/session', async (req, res) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview",
-        voice: "alloy",
+        voice: "shimmer",
         modalities: ["audio", "text"],
         turn_detection: {
           type: "server_vad",

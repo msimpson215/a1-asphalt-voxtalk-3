@@ -1,31 +1,12 @@
 import express from 'express'
-import fetch from 'node-fetch'
 import dotenv from 'dotenv'
+
 dotenv.config()
 
 const app = express()
 app.use(express.static('public'))
 
-app.get('/session', async (req, res) => {
-  try {
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "shimmer",
-        modalities: ["audio", "text"],
-        turn_detection: {
-          type: "server_vad",
-          silence_duration_ms: 900,
-          prefix_padding_ms: 300,
-          create_response: true
-        },
-        instructions:
-`You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
+const INSTRUCTIONS = `You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
 IMPORTANT: You must NOT talk over the user. Wait until the user finishes speaking, then respond.
 START OF SESSION (say exactly this once, and only once):
 "Hello, welcome to A1 Professional Asphalt and Sealing. I am an AI team member here to answer all your questions. What can I do for you?"
@@ -51,13 +32,51 @@ STRICT RULES:
 STYLE:
 - Friendly, calm, local, professional.
 - Answer what was asked. No extra topics. No repeated greeting.`
-      })
+
+const sessionConfig = JSON.stringify({
+  type: 'realtime',
+  model: 'gpt-realtime-1.5',
+  output_modalities: ['audio'],
+  instructions: INSTRUCTIONS,
+  audio: {
+    input: {
+      turn_detection: {
+        type: 'server_vad',
+        silence_duration_ms: 900,
+        prefix_padding_ms: 300,
+        create_response: true
+      }
+    },
+    output: {
+      voice: 'shimmer'
+    }
+  }
+})
+
+app.post('/session', express.text({ type: ['application/sdp', 'text/plain'] }), async (req, res) => {
+  try {
+    const fd = new FormData()
+    fd.set('sdp', req.body)
+    fd.set('session', sessionConfig)
+
+    const response = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: fd
     })
-    const data = await response.json()
-    res.json(data)
+
+    const body = await response.text()
+    if (!response.ok) {
+      console.error('Realtime call error:', response.status, body)
+      return res.status(response.status).type('application/json').send(body)
+    }
+
+    res.type('application/sdp').send(body)
   } catch (error) {
     console.error('Session error:', error)
-    res.status(500).json({ error: "API Failure" })
+    res.status(500).json({ error: 'API Failure' })
   }
 })
 

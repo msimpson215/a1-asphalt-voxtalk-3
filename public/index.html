@@ -300,9 +300,6 @@
       setStarting()
 
       try {
-        const r = await fetch('/session')
-        const data = await r.json()
-
         pc = new RTCPeerConnection()
 
         const audio = document.createElement('audio')
@@ -314,25 +311,36 @@
           }
         }
 
+        const dc = pc.createDataChannel('oai-events')
+        dc.addEventListener('open', () => {
+          dc.send(JSON.stringify({
+            type: 'response.create',
+            response: {
+              input: [],
+              instructions: 'Say exactly once: "Hello, welcome to A1 Professional Asphalt and Sealing. I am an AI team member here to answer all your questions. What can I do for you?"'
+            }
+          }))
+        })
+
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
         pc.addTrack(localStream.getTracks()[0])
 
         const offer = await pc.createOffer()
         await pc.setLocalDescription(offer)
 
-        const sdpResponse = await fetch(
-          "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17",
-          {
-            method: "POST",
-            body: offer.sdp,
-            headers: {
-              Authorization: `Bearer ${data.client_secret.value}`,
-              "Content-Type": "application/sdp"
-            }
+        const sdpResponse = await fetch('/session', {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            'Content-Type': 'application/sdp'
           }
-        )
+        })
 
-        const answer = { type: "answer", sdp: await sdpResponse.text() }
+        if (!sdpResponse.ok) {
+          throw new Error(await sdpResponse.text())
+        }
+
+        const answer = { type: 'answer', sdp: await sdpResponse.text() }
         await pc.setRemoteDescription(answer)
 
         setActive()

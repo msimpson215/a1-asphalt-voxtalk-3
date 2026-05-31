@@ -67,8 +67,8 @@
     .hide-soft { visibility: hidden; }
 
     #orb-container {
-      width: 185px;   /* slightly smaller */
-      height: 185px;
+      width: 220px;
+      height: 220px;
       cursor: pointer;
       display: grid;
       place-items: center;
@@ -78,26 +78,62 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background-color: var(--yellow);
-      box-shadow: 0 0 58px rgba(254, 209, 0, 0.78);
+      background: url('/images/A1__asphalt_logo.jpeg') center / 70% no-repeat;
+      background-color: #111;
+      border: 3px solid var(--yellow);
+      box-shadow:
+        0 0 60px rgba(245, 197, 24, 0.4),
+        0 0 120px rgba(245, 197, 24, 0.15),
+        0 0 200px rgba(245, 197, 24, 0.08);
       transform: scale(1);
-      transition: transform 260ms ease, box-shadow 260ms ease;
+      animation: orbPulse 3s ease-in-out infinite;
+      transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
     }
 
-    #orb-container:hover .orb{
+    #orb-container:hover .orb {
       transform: scale(1.03);
-      box-shadow: 0 0 75px rgba(254,209,0,0.9);
     }
 
     body.active .orb {
-      transform: scale(1.12);
-      box-shadow: 0 0 100px rgba(254, 209, 0, 1);
-      animation: pulse 1.35s infinite alternate ease-in-out;
+      animation: orbActive 1.35s infinite alternate ease-in-out;
     }
 
-    @keyframes pulse {
-      0%   { transform: scale(1.08); box-shadow: 0 0 68px rgba(254,209,0,0.75); }
-      100% { transform: scale(1.15); box-shadow: 0 0 112px rgba(254,209,0,1); }
+    @keyframes orbPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow:
+          0 0 60px rgba(245, 197, 24, 0.4),
+          0 0 120px rgba(245, 197, 24, 0.15),
+          0 0 200px rgba(245, 197, 24, 0.08);
+        border-color: var(--yellow);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow:
+          0 0 80px rgba(245, 197, 24, 0.6),
+          0 0 160px rgba(245, 197, 24, 0.25),
+          0 0 260px rgba(245, 197, 24, 0.12);
+        border-color: #fff;
+      }
+    }
+
+    @keyframes orbActive {
+      0% {
+        transform: scale(1.05);
+        box-shadow:
+          0 0 80px rgba(245, 197, 24, 0.6),
+          0 0 160px rgba(245, 197, 24, 0.25),
+          0 0 260px rgba(245, 197, 24, 0.12);
+        border-color: #fff;
+      }
+      100% {
+        transform: scale(1.1);
+        box-shadow:
+          0 0 100px rgba(245, 197, 24, 0.8),
+          0 0 200px rgba(245, 197, 24, 0.35),
+          0 0 300px rgba(245, 197, 24, 0.15);
+        border-color: var(--yellow);
+      }
     }
 
     #status-text{
@@ -139,7 +175,7 @@
 <body class="idle">
   <div id="overlay">
     <div id="panel">
-      <div id="headline">Press to start a conversation with our AI team member</div>
+      <div id="headline">Click to Start a Conversation</div>
 
       <div id="orb-container" onclick="toggleAssistant()">
         <div class="orb"></div>

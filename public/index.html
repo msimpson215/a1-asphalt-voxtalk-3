@@ -46,12 +46,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-
-      /* IMPORTANT: reserve space so nothing shifts */
       gap: 10px;
     }
 
-    /* Reserve space even when "hidden" to prevent layout jump */
     #headline {
       font-size: 0.98rem;
       letter-spacing: 1px;
@@ -60,7 +57,7 @@
       line-height: 1.2;
       color: var(--muted);
       padding: 0 6px;
-      min-height: 2.4em; /* reserve 2 lines */
+      min-height: 2.4em;
       display: grid;
       place-items: center;
     }
@@ -144,7 +141,7 @@
       line-height: 1.2;
       color: var(--yellow);
       opacity: 0.90;
-      min-height: 1.2em; /* reserve 1 line always */
+      min-height: 1.2em;
     }
 
     #hint{
@@ -152,7 +149,7 @@
       color: var(--muted2);
       text-align: center;
       line-height: 1.2;
-      min-height: 1.1em; /* reserve 1 line always */
+      min-height: 1.1em;
       margin-top: -2px;
     }
 
@@ -169,6 +166,50 @@
     #footer .phone { font-size: 0.78rem; opacity: 0.9; margin-top: 4px; }
 
     body.starting #orb-container { pointer-events: none; opacity: 0.95; }
+
+    /* Embedded in the main A1 website iframe: no second box or black backdrop */
+    body.embedded {
+      background: transparent;
+    }
+
+    body.embedded #overlay {
+      padding: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    body.embedded #panel {
+      width: auto;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      pointer-events: auto;
+    }
+
+    body.embedded #headline,
+    body.embedded #footer {
+      display: none;
+    }
+
+    body.embedded #orb-container {
+      width: 260px;
+      height: 260px;
+    }
+
+    body.embedded #hint {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 16px;
+    }
+
+    body.embedded.idle #hint,
+    body.embedded.starting #status-text {
+      display: none;
+    }
   </style>
 </head>
 
@@ -195,31 +236,37 @@
     let pc = null
     let localStream = null
     let starting = false
+    let embedStarted = false
 
+    const isEmbedded = window.self !== window.top
     const statusEl = document.getElementById('status-text')
     const headlineEl = document.getElementById('headline')
     const hintEl = document.getElementById('hint')
 
+    function setBodyState(state) {
+      document.body.className = isEmbedded ? `${state} embedded` : state
+    }
+
     function setIdle(){
-      document.body.className = 'idle'
+      setBodyState('idle')
       statusEl.textContent = ''
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
       starting = false
     }
 
     function setStarting(){
-      document.body.className = 'starting'
-      statusEl.textContent = 'STARTING…'
+      setBodyState('starting')
+      statusEl.textContent = isEmbedded ? '' : 'STARTING…'
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
     }
 
     function setActive(){
-      document.body.className = 'active'
+      setBodyState('active')
       statusEl.textContent = ''
       headlineEl.classList.add('hide-soft')
-      hintEl.textContent = 'Click orb to end'
+      hintEl.textContent = isEmbedded ? 'Click orb to end' : 'Click orb to end'
     }
 
     async function hardStop(){
@@ -235,6 +282,7 @@
     }
 
     document.getElementById('overlay').addEventListener('click', async (e) => {
+      if (isEmbedded) return
       if (e.target.id !== 'overlay') return
       await hardStop()
       try { window.parent.postMessage({ type: 'voxtalk-close' }, '*') } catch {}
@@ -243,7 +291,6 @@
     })
 
     async function toggleAssistant(){
-      // Stop / pause if running OR starting
       if (pc || starting) {
         await hardStop()
         return
@@ -296,15 +343,41 @@
           try { localStream.getTracks().forEach(t => t.stop()) } catch {}
           localStream = null
         }
-        document.body.className = 'idle'
-        statusEl.textContent = 'ERROR'
+        setBodyState('idle')
+        statusEl.textContent = isEmbedded ? '' : 'ERROR'
         starting = false
         headlineEl.classList.remove('hide-soft')
-        hintEl.textContent = 'Click outside this box to return to the website'
+        hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
       }
     }
 
-    setIdle()
+    function startWhenVisible() {
+      if (embedStarted || pc || starting) return
+      embedStarted = true
+      toggleAssistant()
+    }
+
+    function waitUntilVisible(callback) {
+      function check() {
+        if (document.body.offsetWidth > 0 && document.body.offsetHeight > 0) {
+          callback()
+        } else {
+          requestAnimationFrame(check)
+        }
+      }
+      check()
+    }
+
+    if (isEmbedded) {
+      setBodyState('idle')
+      waitUntilVisible(startWhenVisible)
+
+      window.addEventListener('message', (e) => {
+        if (e.data?.type === 'voxtalk-start') startWhenVisible()
+      })
+    } else {
+      setIdle()
+    }
   </script>
 </body>
 </html>

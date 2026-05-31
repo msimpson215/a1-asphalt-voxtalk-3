@@ -206,6 +206,43 @@
       margin-top: 16px;
     }
 
+
+    #stop-btn {
+      display: none;
+      margin-top: 18px;
+      padding: 12px 28px;
+      border: 2px solid var(--yellow);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: var(--yellow);
+      font-family: "Arial Narrow", Arial, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    #stop-btn:hover {
+      background: var(--yellow);
+      color: #111;
+    }
+
+    body.active #stop-btn,
+    body.starting #stop-btn {
+      display: inline-block;
+    }
+
+    body.embedded #stop-btn {
+      position: fixed;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10003;
+      margin-top: 0;
+    }
+
     body.embedded.idle #hint,
     body.embedded.starting #status-text {
       display: none;
@@ -224,6 +261,8 @@
 
       <div id="status-text"></div>
       <div id="hint">Click outside this box to return to the website</div>
+
+      <button id="stop-btn" type="button" onclick="stopAndClose(event)">Stop Conversation</button>
 
       <div id="footer">
         <div class="brand">A1 Asphalt &amp; Sealing</div>
@@ -266,7 +305,14 @@
       setBodyState('active')
       statusEl.textContent = ''
       headlineEl.classList.add('hide-soft')
-      hintEl.textContent = isEmbedded ? 'Click orb to end' : 'Click orb to end'
+      hintEl.textContent = isEmbedded ? 'Tap Stop to end' : 'Click Stop to end'
+    }
+
+    async function stopAndClose(e){
+      if (e) e.stopPropagation()
+      await hardStop()
+      embedStarted = false
+      try { window.parent.postMessage({ type: 'voxtalk-close' }, '*') } catch {}
     }
 
     async function hardStop(){
@@ -292,7 +338,7 @@
 
     async function toggleAssistant(){
       if (pc || starting) {
-        await hardStop()
+        await stopAndClose()
         return
       }
 
@@ -311,13 +357,19 @@
           }
         }
 
+        let greetingSent = false
         const dc = pc.createDataChannel('oai-events')
-        dc.addEventListener('open', () => {
+        dc.addEventListener('message', (e) => {
+          let event
+          try { event = JSON.parse(e.data) } catch { return }
+          if (greetingSent) return
+          if (event.type !== 'session.created' && event.type !== 'session.updated') return
+          greetingSent = true
           dc.send(JSON.stringify({
             type: 'response.create',
             response: {
               input: [],
-              instructions: 'Say exactly once: "Hello, welcome to A1 Professional Asphalt and Sealing. I am an AI team member here to answer all your questions. What can I do for you?"'
+              instructions: 'Say exactly: "Hi, I\'m the AI team member for A1 Professional Asphalt and Sealing. What can I help you with today?" Then stop and wait for the user.'
             }
           }))
         })

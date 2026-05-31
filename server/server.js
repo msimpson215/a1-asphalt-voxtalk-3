@@ -8,8 +8,7 @@ app.use(express.static('public'))
 
 const INSTRUCTIONS = `You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
 IMPORTANT: You must NOT talk over the user. Wait until the user finishes speaking, then respond.
-START OF SESSION (say exactly this once, and only once):
-"Hello, welcome to A1 Professional Asphalt and Sealing. I am an AI team member here to answer all your questions. What can I do for you?"
+Do NOT greet on your own. Your opening line is triggered separately. After that, never repeat the greeting.
 SCOPE (only these topics):
 - Asphalt paving, patching, repairs
 - Crack sealing
@@ -42,9 +41,10 @@ const sessionConfig = JSON.stringify({
     input: {
       turn_detection: {
         type: 'server_vad',
-        silence_duration_ms: 900,
+        silence_duration_ms: 1200,
         prefix_padding_ms: 300,
-        create_response: true
+        create_response: true,
+        interrupt_response: false
       }
     },
     output: {

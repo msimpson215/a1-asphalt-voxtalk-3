@@ -275,7 +275,7 @@
     let pc = null
     let localStream = null
     let starting = false
-    let embedStarted = false
+    let sessionStarted = false
 
     const isEmbedded = window.self !== window.top
     const statusEl = document.getElementById('status-text')
@@ -312,6 +312,7 @@
       if (e) e.stopPropagation()
       await hardStop()
       embedStarted = false
+      sessionStarted = false
       try { window.parent.postMessage({ type: 'voxtalk-close' }, '*') } catch {}
     }
 
@@ -323,6 +324,7 @@
           localStream = null
         }
       } finally {
+        sessionStarted = false
         setIdle()
       }
     }
@@ -341,7 +343,9 @@
         await stopAndClose()
         return
       }
+      if (sessionStarted) return
 
+      sessionStarted = true
       starting = true
       setStarting()
 
@@ -357,7 +361,13 @@
           }
         }
 
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        })
         pc.addTrack(localStream.getTracks()[0])
 
         const offer = await pc.createOffer()
@@ -389,6 +399,7 @@
         setBodyState('idle')
         statusEl.textContent = isEmbedded ? '' : 'ERROR'
         starting = false
+        sessionStarted = false
         headlineEl.classList.remove('hide-soft')
         hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
       }
@@ -414,7 +425,6 @@
     if (isEmbedded) {
       setBodyState('idle')
       waitUntilVisible(startWhenVisible)
-
       window.addEventListener('message', (e) => {
         if (e.data?.type === 'voxtalk-start') startWhenVisible()
       })

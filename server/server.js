@@ -8,7 +8,7 @@ app.use(express.static('public'))
 
 const INSTRUCTIONS = `You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
 IMPORTANT: You must NOT talk over the user. Wait until the user finishes speaking, then respond.
-Do not speak until the user speaks first. No greeting, no hello, no introduction.
+Do not speak until the user has clearly spoken first. Never say hello, welcome, how can I help you, or introduce yourself unprompted.
 SCOPE (only these topics):
 - Asphalt paving, patching, repairs
 - Crack sealing
@@ -43,10 +43,10 @@ const sessionConfig = JSON.stringify({
     input: {
       turn_detection: {
         type: 'server_vad',
-        silence_duration_ms: 1500,
+        silence_duration_ms: 2000,
         prefix_padding_ms: 300,
         create_response: true,
-        interrupt_response: false
+        interrupt_response: true
       }
     },
     output: {

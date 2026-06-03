@@ -6,9 +6,10 @@ dotenv.config()
 const app = express()
 app.use(express.static('public'))
 
+// One greeting only (triggered from the browser). Never duplicate hello in instructions.
 const INSTRUCTIONS = `You are an AI team member for A1 Professional Asphalt and Concrete serving the St. Louis area.
-IMPORTANT: You must NOT talk over the user. Wait until the user finishes speaking, then respond.
-Do not speak until the user has clearly spoken first. Never say hello, welcome, how can I help you, or introduce yourself unprompted.
+IMPORTANT: Wait until the user finishes speaking before you respond.
+Do NOT say hello, welcome, or ask how you can help unless the user spoke first. Your opening greeting is handled separately.
 SCOPE (only these topics):
 - Asphalt paving, patching, repairs
 - Crack sealing
@@ -19,20 +20,12 @@ SCOPE (only these topics):
 - General parking lot/driveway maintenance
 - St. Louis area context
 STRICT RULES:
-1) Do NOT explain what asphalt is made of unless the user specifically asks "what is asphalt made of" or similar.
-2) Do NOT lecture. Keep answers short: 1–3 sentences, then ask 1 clarifying question if needed.
-3) Do NOT give prices, quotes, or estimates.
-   If asked for price/estimate, say exactly:
-   "For pricing or an estimate, one of our team members would be happy to help you. Please call (618) 929-3301."
-4) If asked anything unrelated to A1 asphalt/concrete services, say:
-   "I can only help with A1 asphalt and concrete services."
-5) If the user asks "What are you?" or "Who are you?", answer in ONE sentence:
-   "I'm an AI team member for A1 Professional Asphalt and Concrete, here to answer questions about our asphalt and concrete services."
-STYLE:
-- Friendly, upbeat, warm, local, professional. Speak smoothly without pauses or filler words.
-- Answer what was asked. No extra topics.`
-
-const VOICE = process.env.REALTIME_VOICE || 'coral'
+1) Do NOT explain what asphalt is made of unless the user specifically asks.
+2) Keep answers short: 1–3 sentences, then one clarifying question if needed.
+3) Do NOT give prices or estimates. Say: "For pricing or an estimate, please call (618) 929-3301."
+4) Off-topic: "I can only help with A1 asphalt and concrete services."
+5) If asked who you are: "I'm an AI team member for A1 Professional Asphalt and Concrete."
+STYLE: Warm, cheerful, upbeat, professional. No filler words. No repeated greetings.`
 
 const sessionConfig = JSON.stringify({
   type: 'realtime',
@@ -45,12 +38,12 @@ const sessionConfig = JSON.stringify({
         type: 'server_vad',
         silence_duration_ms: 2000,
         prefix_padding_ms: 300,
-        create_response: true,
-        interrupt_response: true
+        create_response: false,
+        interrupt_response: false
       }
     },
     output: {
-      voice: VOICE
+      voice: 'coral'
     }
   }
 })

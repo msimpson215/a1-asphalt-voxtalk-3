@@ -175,7 +175,13 @@
     body.embedded #overlay {
       padding: 0;
       background: transparent;
-      pointer-events: none;
+      pointer-events: auto;
+      inset: 0;
+      position: fixed;
+    }
+
+    body.embedded.idle #overlay {
+      cursor: pointer;
     }
 
     body.embedded #panel {
@@ -188,8 +194,11 @@
       pointer-events: auto;
     }
 
-    body.embedded #headline,
     body.embedded #footer {
+      display: none;
+    }
+
+    body.embedded:not(.idle) #headline {
       display: none;
     }
 
@@ -263,14 +272,14 @@
 <body class="idle">
   <div id="overlay">
     <div id="panel">
-      <div id="headline">Click to Start a Conversation</div>
+      <div id="headline">Tap to Start a Conversation</div>
 
-      <div id="orb-container" onclick="startFromUserTap()">
+      <div id="orb-container" role="button" tabindex="0" aria-label="Tap to start conversation">
         <div class="orb"></div>
       </div>
 
       <div id="status-text"></div>
-      <div id="hint">Click outside this box to return to the website</div>
+      <div id="hint">Tap the orb to start talking</div>
 
       <button id="stop-btn" type="button" onclick="stopAndClose(event)">Stop Conversation</button>
 
@@ -286,6 +295,8 @@
     let localStream = null
     let starting = false
     let sessionStarted = false
+    let embedStarted = false
+    let tapLock = false
 
     const isEmbedded = window.self !== window.top
     const statusEl = document.getElementById('status-text')
@@ -300,7 +311,7 @@
       setBodyState('idle')
       statusEl.textContent = ''
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? 'Tap the orb to start talking' : 'Click outside this box to return to the website'
       starting = false
     }
 
@@ -308,7 +319,7 @@
       setBodyState('starting')
       statusEl.textContent = isEmbedded ? '' : 'STARTING…'
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? 'Tap the orb to start talking' : 'Click outside this box to return to the website'
     }
 
     function setActive(){
@@ -335,6 +346,7 @@
         }
       } finally {
         sessionStarted = false
+        tapLock = false
         setIdle()
       }
     }
@@ -453,6 +465,7 @@
         await pc.setRemoteDescription(answer)
 
         setActive()
+        tapLock = false
       } catch (err) {
         console.error(err)
         pc = null
@@ -464,8 +477,9 @@
         statusEl.textContent = isEmbedded ? '' : 'ERROR'
         starting = false
         sessionStarted = false
+        tapLock = false
         headlineEl.classList.remove('hide-soft')
-        hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
+        hintEl.textContent = isEmbedded ? 'Tap the orb to start talking' : 'Click outside this box to return to the website'
       }
     }
 
@@ -475,11 +489,33 @@
     }
 
     async function startFromUserTap() {
-      await toggleAssistant()
+      if (tapLock) return
+      tapLock = true
+      try {
+        await toggleAssistant()
+      } finally {
+        if (!pc && !starting) tapLock = false
+      }
     }
+
+    const orbEl = document.getElementById('orb-container')
+    orbEl.addEventListener('click', (e) => {
+      e.stopPropagation()
+      startFromUserTap()
+    })
+    orbEl.addEventListener(
+      'touchstart',
+      (e) => {
+        e.stopPropagation()
+        startFromUserTap()
+      },
+      { passive: true }
+    )
 
     if (isEmbedded) {
       setBodyState('idle')
+      headlineEl.textContent = 'Tap to Start a Conversation'
+      hintEl.textContent = 'Tap the orb to start talking'
       window.addEventListener('message', (e) => {
         if (e.data?.type === 'voxtalk-start') startWhenVisible()
       })

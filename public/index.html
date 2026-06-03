@@ -357,24 +357,48 @@
           }
         }
 
-        let greetingSent = false
+        let greetingRequested = false
+        let vadEnabled = false
         const dc = pc.createDataChannel('oai-events')
         dc.addEventListener('message', (e) => {
           let event
           try { event = JSON.parse(e.data) } catch { return }
-          if (greetingSent) return
-          if (event.type !== 'session.created') return
-          greetingSent = true
-          setTimeout(() => {
-            if (!pc || pc.connectionState === 'closed') return
+
+          if (!greetingRequested && event.type === 'session.created') {
+            greetingRequested = true
+            setTimeout(() => {
+              if (!pc || pc.connectionState === 'closed') return
+              dc.send(JSON.stringify({
+                type: 'response.create',
+                response: {
+                  input: [],
+                  instructions: 'Say only this one sentence, then stop speaking: "Hi! Thanks for calling A1 Asphalt and Sealing. What can I help you with today?"'
+                }
+              }))
+            }, 1200)
+            return
+          }
+
+          if (greetingRequested && !vadEnabled && event.type === 'response.done') {
+            vadEnabled = true
             dc.send(JSON.stringify({
-              type: 'response.create',
-              response: {
-                input: [],
-                instructions: 'Read this greeting aloud in one smooth, upbeat sentence with no pauses, no filler words, and no extra words: "Hi! Thanks for calling A1 Asphalt and Sealing. What can I help you with today?"'
+              type: 'session.update',
+              session: {
+                type: 'realtime',
+                audio: {
+                  input: {
+                    turn_detection: {
+                      type: 'server_vad',
+                      silence_duration_ms: 1500,
+                      prefix_padding_ms: 300,
+                      create_response: true,
+                      interrupt_response: false
+                    }
+                  }
+                }
               }
             }))
-          }, 1200)
+          }
         })
 
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true })

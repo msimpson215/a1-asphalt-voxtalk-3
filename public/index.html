@@ -344,82 +344,46 @@
     function setupRealtimeChannel(peerConnection) {
       const dc = peerConnection.createDataChannel('oai-events')
       let greetingPlayed = false
-      let listeningEnabled = false
-      let sessionReady = false
-      let dcOpen = false
-
-      function enableListening() {
-        if (listeningEnabled || dc.readyState !== 'open') return
-        listeningEnabled = true
-        dc.send(JSON.stringify({
-          type: 'session.update',
-          session: {
-            type: 'realtime',
-            audio: {
-              input: {
-                turn_detection: {
-                  type: 'server_vad',
-                  silence_duration_ms: 2000,
-                  prefix_padding_ms: 300,
-                  create_response: true,
-                  interrupt_response: true
-                }
-              }
-            }
-          }
-        }))
-      }
-
-      function playGreeting() {
-        if (greetingPlayed || dc.readyState !== 'open') return
-        greetingPlayed = true
-        dc.send(JSON.stringify({
-          type: 'response.create',
-          response: {
-            output_modalities: ['audio'],
-            instructions:
-              `Speak in a warm, cheerful, upbeat female tone. Say exactly this, word for word, then stop: "${GREETING_LINE}"`
-          }
-        }))
-      }
-
-      function tryStartGreeting() {
-        if (!sessionReady || !dcOpen || greetingPlayed) return
-        playGreeting()
-      }
-
-      dc.addEventListener('open', () => {
-        dcOpen = true
-        tryStartGreeting()
-      })
+      let listeningOn = false
 
       dc.addEventListener('message', (event) => {
         let msg
         try { msg = JSON.parse(event.data) } catch { return }
 
-        if (msg.type === 'session.created') {
-          sessionReady = true
-          tryStartGreeting()
+        if (msg.type === 'session.created' && !greetingPlayed) {
+          greetingPlayed = true
+          dc.send(JSON.stringify({
+            type: 'response.create',
+            response: {
+              output_modalities: ['audio'],
+              instructions:
+                `Speak in a warm, cheerful, upbeat female tone. Say exactly this, word for word, then stop: "${GREETING_LINE}"`
+            }
+          }))
           return
         }
 
-        if (msg.type === 'error') {
-          console.error('Realtime error:', msg)
-          enableListening()
-          return
-        }
-
-        if (msg.type === 'response.done' && greetingPlayed) {
-          enableListening()
+        if (msg.type === 'response.done' && greetingPlayed && !listeningOn) {
+          listeningOn = true
+          dc.send(JSON.stringify({
+            type: 'session.update',
+            session: {
+              type: 'realtime',
+              audio: {
+                input: {
+                  turn_detection: {
+                    type: 'server_vad',
+                    silence_duration_ms: 2000,
+                    prefix_padding_ms: 300,
+                    create_response: true,
+                    interrupt_response: true
+                  }
+                }
+              }
+            }
+          }))
         }
       })
-
-      setTimeout(() => {
-        if (!listeningEnabled) {
-          if (!greetingPlayed && dc.readyState === 'open') playGreeting()
-          enableListening()
-        }
-      }, 4000)
     }
 
     async function toggleAssistant(){
@@ -439,9 +403,6 @@
 
         const audio = document.createElement('audio')
         audio.autoplay = true
-        audio.playsInline = true
-        audio.setAttribute('playsinline', 'true')
-        document.body.appendChild(audio)
 
         pc.ontrack = (e) => {
           if (audio.srcObject !== e.streams[0]) {

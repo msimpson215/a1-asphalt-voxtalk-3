@@ -1,0 +1,13 @@
+Apply to msimpson215/A1-test public/index.html only (3 small edits).
+
+1) Nav labels: Artificial Intelligence → Artificial Person Team Member (lines ~39 and ~56)
+
+2) Bottom orb — use same link as hamburger:
+   Replace the ai-orb-wrap inner div with:
+   <a href="javascript:void(0)" onclick="openVox(); return false;" id="aiOrb" class="ai-orb" title="Press to start a conversation with our artificial person team member"></a>
+   <span class="orb-label">Press to Start a Conversation<br>With Our Artificial Person Team Member</span>
+
+3) Outside-click close — replace document click listener with:
+   document.addEventListener('click',function(e){var o=document.getElementById('vox-overlay');if(!o||!o.classList.contains('open'))return;if(e.target.closest('#aiOrb')||e.target.closest('[onclick*="openVox"]'))return;if(!o.contains(e.target))closeVox();});
+
+4) styles.css .ai-orb add display:block; (for <a> tag)

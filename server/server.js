@@ -29,8 +29,10 @@ STRICT RULES:
 5) If the user asks "What are you?" or "Who are you?", answer in ONE sentence:
    "I'm an AI team member for A1 Professional Asphalt and Concrete, here to answer questions about our asphalt and concrete services."
 STYLE:
-- Friendly, calm, local, professional.
+- Friendly, upbeat, warm, local, professional. Speak smoothly without pauses or filler words.
 - Answer what was asked. No extra topics. No repeated greeting.`
+
+const VOICE = process.env.REALTIME_VOICE || 'coral'
 
 const sessionConfig = JSON.stringify({
   type: 'realtime',
@@ -41,14 +43,14 @@ const sessionConfig = JSON.stringify({
     input: {
       turn_detection: {
         type: 'server_vad',
-        silence_duration_ms: 1200,
+        silence_duration_ms: 1500,
         prefix_padding_ms: 300,
         create_response: true,
         interrupt_response: false
       }
     },
     output: {
-      voice: 'shimmer'
+      voice: VOICE
     }
   }
 })

@@ -363,15 +363,18 @@
           let event
           try { event = JSON.parse(e.data) } catch { return }
           if (greetingSent) return
-          if (event.type !== 'session.created' && event.type !== 'session.updated') return
+          if (event.type !== 'session.created') return
           greetingSent = true
-          dc.send(JSON.stringify({
-            type: 'response.create',
-            response: {
-              input: [],
-              instructions: 'Say exactly: "Hi, I\'m the AI team member for A1 Professional Asphalt and Sealing. What can I help you with today?" Then stop and wait for the user.'
-            }
-          }))
+          setTimeout(() => {
+            if (!pc || pc.connectionState === 'closed') return
+            dc.send(JSON.stringify({
+              type: 'response.create',
+              response: {
+                input: [],
+                instructions: 'Read this greeting aloud in one smooth, upbeat sentence with no pauses, no filler words, and no extra words: "Hi! Thanks for calling A1 Asphalt and Sealing. What can I help you with today?"'
+              }
+            }))
+          }, 1200)
         })
 
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true })

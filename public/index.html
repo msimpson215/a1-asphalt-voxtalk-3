@@ -276,7 +276,6 @@
     let localStream = null
     let starting = false
     let sessionStarted = false
-    let embedStarted = false
 
     const isEmbedded = window.self !== window.top
     const statusEl = document.getElementById('status-text')
@@ -352,8 +351,8 @@
 
       try {
 
-    const GREETING_LINE =
-      "Hello! I'm the artificial human team member for A1 Professional Asphalt and Sealing. How can I help you today?"
+        const GREETING_LINE =
+          "Hello! I'm the artificial human team member for A1 Professional Asphalt and Sealing. How can I help you today?"
 
         function setupRealtimeChannel(peerConnection) {
           const dc = peerConnection.createDataChannel('oai-events')
@@ -369,8 +368,9 @@
               dc.send(JSON.stringify({
                 type: 'response.create',
                 response: {
-                  modalities: ['audio'],
-                  instructions: `Say exactly this one cheerful sentence and then stop: "${GREETING_LINE}"`
+                  output_modalities: ['audio'],
+                  instructions:
+                    `Speak in a warm, cheerful, upbeat female tone. Say exactly this, word for word, then stop: "${GREETING_LINE}"`
                 }
               }))
               return

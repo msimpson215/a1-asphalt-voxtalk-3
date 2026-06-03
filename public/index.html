@@ -243,7 +243,17 @@
       margin-top: 0;
     }
 
-    body.embedded.idle #hint,
+    body.embedded.idle #headline {
+      display: grid;
+    }
+
+    body.embedded.idle #hint {
+      display: block;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+
     body.embedded.starting #status-text {
       display: none;
     }
@@ -255,7 +265,7 @@
     <div id="panel">
       <div id="headline">Click to Start a Conversation</div>
 
-      <div id="orb-container" onclick="toggleAssistant()">
+      <div id="orb-container" onclick="startFromUserTap()">
         <div class="orb"></div>
       </div>
 
@@ -290,7 +300,7 @@
       setBodyState('idle')
       statusEl.textContent = ''
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
       starting = false
     }
 
@@ -298,7 +308,7 @@
       setBodyState('starting')
       statusEl.textContent = isEmbedded ? '' : 'STARTING…'
       headlineEl.classList.remove('hide-soft')
-      hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
+      hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
     }
 
     function setActive(){
@@ -394,6 +404,7 @@
       if (sessionStarted) return
 
       sessionStarted = true
+      embedStarted = true
       starting = true
       setStarting()
 
@@ -403,11 +414,15 @@
 
         const audio = document.createElement('audio')
         audio.autoplay = true
+        audio.playsInline = true
+        audio.setAttribute('playsinline', '')
+        document.body.appendChild(audio)
 
         pc.ontrack = (e) => {
           if (audio.srcObject !== e.streams[0]) {
             audio.srcObject = e.streams[0]
           }
+          audio.play().catch(() => {})
         }
 
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -450,30 +465,21 @@
         starting = false
         sessionStarted = false
         headlineEl.classList.remove('hide-soft')
-        hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
+        hintEl.textContent = isEmbedded ? 'Tap the orb to start, then speak' : 'Click outside this box to return to the website'
       }
     }
 
     function startWhenVisible() {
       if (embedStarted || pc || starting) return
       embedStarted = true
-      toggleAssistant()
     }
 
-    function waitUntilVisible(callback) {
-      function check() {
-        if (document.body.offsetWidth > 0 && document.body.offsetHeight > 0) {
-          callback()
-        } else {
-          requestAnimationFrame(check)
-        }
-      }
-      check()
+    async function startFromUserTap() {
+      await toggleAssistant()
     }
 
     if (isEmbedded) {
       setBodyState('idle')
-      waitUntilVisible(startWhenVisible)
       window.addEventListener('message', (e) => {
         if (e.data?.type === 'voxtalk-start') startWhenVisible()
       })

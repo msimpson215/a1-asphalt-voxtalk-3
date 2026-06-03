@@ -276,9 +276,10 @@
     let localStream = null
     let starting = false
     let sessionStarted = false
-    let userTapStarted = false
+    let embedStarted = false
 
     const isEmbedded = window.self !== window.top
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
     const statusEl = document.getElementById('status-text')
     const headlineEl = document.getElementById('headline')
     const hintEl = document.getElementById('hint')
@@ -312,7 +313,7 @@
     async function stopAndClose(e){
       if (e) e.stopPropagation()
       await hardStop()
-      userTapStarted = false
+      embedStarted = false
       sessionStarted = false
       try { window.parent.postMessage({ type: 'voxtalk-close' }, '*') } catch {}
     }
@@ -455,46 +456,54 @@
         statusEl.textContent = isEmbedded ? '' : 'ERROR'
         starting = false
         sessionStarted = false
+        embedStarted = false
         headlineEl.classList.remove('hide-soft')
         hintEl.textContent = isEmbedded ? '' : 'Click outside this box to return to the website'
+        if (isEmbedded && isMobile) showMobileVoiceLink()
       }
     }
 
-    let userTapStarted = false
+    function showMobileVoiceLink() {
+      if (document.getElementById('mobile-voice-link')) return
+      const btn = document.createElement('button')
+      btn.id = 'mobile-voice-link'
+      btn.type = 'button'
+      btn.textContent = 'Tap here to start voice (opens full screen)'
+      btn.style.cssText =
+        'margin-top:18px;padding:14px 22px;border:2px solid #F5C518;border-radius:999px;background:#111;color:#F5C518;font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer'
+      btn.onclick = () => {
+        window.open(window.location.origin + window.location.pathname, '_blank', 'noopener')
+      }
+      document.getElementById('panel').appendChild(btn)
+    }
 
     function startWhenVisible() {
-      if (pc || starting || sessionStarted) return
+      if (embedStarted || pc || starting) return
+      embedStarted = true
       toggleAssistant()
+    }
+
+    function waitUntilVisible(callback) {
+      function check() {
+        if (document.body.offsetWidth > 0 && document.body.offsetHeight > 0) {
+          callback()
+        } else {
+          requestAnimationFrame(check)
+        }
+      }
+      check()
     }
 
     if (isEmbedded) {
       setBodyState('idle')
-
-      function onUserTap() {
-        if (userTapStarted || pc || starting || sessionStarted) return
-        userTapStarted = true
-        toggleAssistant().finally(() => {
-          if (!pc && !sessionStarted) userTapStarted = false
-        })
+      if (isMobile) {
+        headlineEl.textContent = 'Tap below to start voice'
+        showMobileVoiceLink()
+      } else {
+        waitUntilVisible(startWhenVisible)
       }
-
-      document.getElementById('orb-container').addEventListener('click', (e) => {
-        e.stopPropagation()
-        onUserTap()
-      })
-      document.getElementById('orb-container').addEventListener(
-        'touchstart',
-        (e) => {
-          e.stopPropagation()
-          onUserTap()
-        },
-        { passive: true }
-      )
-
       window.addEventListener('message', (e) => {
-        if (e.data?.type === 'voxtalk-start') {
-          /* parent opened iframe; user still taps orb once for mic */
-        }
+        if (e.data?.type === 'voxtalk-start') startWhenVisible()
       })
     } else {
       setIdle()

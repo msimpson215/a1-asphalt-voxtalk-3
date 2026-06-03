@@ -1,8 +1,7 @@
 /**
- * A1 website overlay fix — load from a1-test before </body>:
+ * Patches A1-test overlay so voice iframe opens immediately (fixes Android double-tap).
+ * Add before </body> on A1-test:
  * <script src="https://a1-asphalt-voxtalk-3.onrender.com/parent-shim.js"></script>
- *
- * Menu opens the voice iframe immediately (no fake parent orb / double tap).
  */
 (function () {
   function showVoiceIframe() {
@@ -17,6 +16,7 @@
     var start = document.getElementById('vox-start')
 
     if (iframe) {
+      iframe.setAttribute('allow', 'microphone *')
       iframe.style.display = 'block'
       iframe.style.position = 'fixed'
       iframe.style.inset = '0'
@@ -33,34 +33,21 @@
     } catch (e) {}
   }
 
-  function closeVoice() {
-    var overlay = document.getElementById('vox-overlay')
-    if (!overlay) return
-    overlay.style.display = 'none'
-    overlay.classList.remove('open')
-    var iframe = document.getElementById('vox-iframe')
-    if (iframe) iframe.style.display = 'none'
-    if (typeof window.closeVox === 'function' && window.closeVox !== closeVoice) {
-      try { window.closeVox() } catch (e) {}
-    }
-  }
-
   window.openVox = showVoiceIframe
-  window.closeVox = closeVoice
 
-  function wireClicks() {
+  document.addEventListener('DOMContentLoaded', function () {
+    var iframe = document.getElementById('vox-iframe')
+    if (iframe) iframe.setAttribute('allow', 'microphone *')
+
     document.querySelectorAll('#vox-overlay .vox-orb, #vox-start, .vox-orb').forEach(function (el) {
       el.onclick = function (e) {
-        if (e) e.preventDefault()
+        if (e) {
+          e.preventDefault()
+          e.stopPropagation()
+        }
         showVoiceIframe()
         return false
       }
     })
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wireClicks)
-  } else {
-    wireClicks()
-  }
+  })
 })()

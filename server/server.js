@@ -4,6 +4,12 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const app = express()
+
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'microphone=(self)')
+  next()
+})
+
 app.use(express.static('public'))
 
 // One greeting only (triggered from the browser). Never duplicate hello in instructions.

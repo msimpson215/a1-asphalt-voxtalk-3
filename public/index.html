@@ -276,6 +276,7 @@
     let localStream = null
     let starting = false
     let sessionStarted = false
+    let userTapStarted = false
 
     const isEmbedded = window.self !== window.top
     const statusEl = document.getElementById('status-text')
@@ -311,7 +312,7 @@
     async function stopAndClose(e){
       if (e) e.stopPropagation()
       await hardStop()
-      embedStarted = false
+      userTapStarted = false
       sessionStarted = false
       try { window.parent.postMessage({ type: 'voxtalk-close' }, '*') } catch {}
     }
@@ -404,11 +405,15 @@
 
         const audio = document.createElement('audio')
         audio.autoplay = true
+        audio.playsInline = true
+        audio.setAttribute('playsinline', '')
+        document.body.appendChild(audio)
 
         pc.ontrack = (e) => {
           if (audio.srcObject !== e.streams[0]) {
             audio.srcObject = e.streams[0]
           }
+          audio.play().catch(() => {})
         }
 
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -455,28 +460,41 @@
       }
     }
 
-    function startWhenVisible() {
-      if (embedStarted || pc || starting) return
-      embedStarted = true
-      toggleAssistant()
-    }
+    let userTapStarted = false
 
-    function waitUntilVisible(callback) {
-      function check() {
-        if (document.body.offsetWidth > 0 && document.body.offsetHeight > 0) {
-          callback()
-        } else {
-          requestAnimationFrame(check)
-        }
-      }
-      check()
+    function startWhenVisible() {
+      if (pc || starting || sessionStarted) return
+      toggleAssistant()
     }
 
     if (isEmbedded) {
       setBodyState('idle')
-      waitUntilVisible(startWhenVisible)
+
+      function onUserTap() {
+        if (userTapStarted || pc || starting || sessionStarted) return
+        userTapStarted = true
+        toggleAssistant().finally(() => {
+          if (!pc && !sessionStarted) userTapStarted = false
+        })
+      }
+
+      document.getElementById('orb-container').addEventListener('click', (e) => {
+        e.stopPropagation()
+        onUserTap()
+      })
+      document.getElementById('orb-container').addEventListener(
+        'touchstart',
+        (e) => {
+          e.stopPropagation()
+          onUserTap()
+        },
+        { passive: true }
+      )
+
       window.addEventListener('message', (e) => {
-        if (e.data?.type === 'voxtalk-start') startWhenVisible()
+        if (e.data?.type === 'voxtalk-start') {
+          /* parent opened iframe; user still taps orb once for mic */
+        }
       })
     } else {
       setIdle()

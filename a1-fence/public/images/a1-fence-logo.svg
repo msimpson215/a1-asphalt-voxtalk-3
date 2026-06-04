@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" role="img" aria-label="A1 Professional Fence LLC">
+  <rect width="800" height="200" fill="#f5c518"/>
+  <text x="40" y="95" font-family="Arial Black, sans-serif" font-size="72" font-weight="900" fill="#111">A1</text>
+  <text x="140" y="75" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111">Professional</text>
+  <text x="140" y="115" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111">Fence LLC</text>
+  <rect x="140" y="125" width="320" height="3" fill="#111"/>
+  <text x="40" y="175" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111">A1FencePro.com · 888-223-3797</text>
+</svg>

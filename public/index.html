@@ -248,6 +248,21 @@
     body.embedded.starting #status-text {
       display: none;
     }
+
+    /* FIX: alignment only — orb stays centered when start/stop UI appears */
+    #headline, #hint, #footer, #status-text, #stop-btn { display: none !important; }
+    #overlay { display: block; padding: 0; }
+    #panel {
+      position: fixed; inset: 0; width: auto; max-width: none;
+      padding: 0; gap: 0; background: transparent; border: none;
+      box-shadow: none; backdrop-filter: none;
+    }
+    #orb-container {
+      position: fixed; top: 50%; left: 50%;
+      width: 220px; height: 220px;
+      transform: translate(-50%, -50%); z-index: 2;
+    }
+    body.active #stop-btn, body.starting #stop-btn { display: none !important; }
   </style>
 </head>
 
